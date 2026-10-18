@@ -1,0 +1,4 @@
+node_modules/
+db/*.sqlite*
+*.tar.gz
+.DS_Store
