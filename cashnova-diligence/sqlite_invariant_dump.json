@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-10-18T19:34:41.657Z",
+  "source_ledger": [
+    {
+      "id": "CPT-ROOT-001",
+      "state": "CONSUMED",
+      "denom": 100000,
+      "generation": 1,
+      "locked_tx_id": null
+    }
+  ],
+  "destination_ledger": [
+    {
+      "id": "CPT-SUCC-001",
+      "state": "FINAL",
+      "denom": 25000,
+      "generation": 2,
+      "parent_cert_hash": "7777777777777777777777777777777777777777777777777777777777777777"
+    }
+  ],
+  "successor_index": [
+    {
+      "parent_cert_hash": "7777777777777777777777777777777777777777777777777777777777777777",
+      "successor_id": "CPT-SUCC-001",
+      "transition_id": "01010101010101010101010101010101"
+    }
+  ]
+}
