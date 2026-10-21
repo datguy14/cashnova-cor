@@ -145,6 +145,10 @@ async function start() {
           const srcPrepBytes = unhex(json.sourcePrepareRecordHex || json.sourcePrepareHex || json.prepRecordHex);
           const srcPrep = CanonicalRecords.deserializeSourcePrepare(srcPrepBytes);
           if (!bytesEqual(srcPrep.envelopeHash, envHash)) return send(400, { error: 'ERR_SRC_ENVELOPE_HASH_MISMATCH' });
+    const outerSrcHash = (json.sourcePrepare && (json.sourcePrepare.envelopeHash || json.sourcePrepare.envelopeHashHex));
+    if (outerSrcHash && outerSrcHash.toLowerCase() !== hex(srcPrep.envelopeHash).toLowerCase()) {
+      return send(400, { error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" });
+    }
           const validSrc = await CryptoEngine.verify(sourcePubKey, unhex(json.sourceSigHex), srcPrepBytes);
           if (!validSrc) return send(401, { error: 'ERR_INVALID_SRC_PREPARE_SIG' });
 
