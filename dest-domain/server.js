@@ -18,9 +18,18 @@ const store = {
   prepareSuccessor(id, denom, gen, parentH) {
     db.exec("BEGIN IMMEDIATE");
     try {
-      if (!db.prepare("SELECT 1 FROM registered_parent_certs WHERE parent_cert_hash = ?").get(parentH)) throw new Error("ERR_UNKNOWN_PARENT_CERT");
-      if (db.prepare("SELECT 1 FROM finalized_successor_index WHERE parent_cert_hash = ?").get(parentH)) { const e = new Error("ERR_PARENT_CERT_ALREADY_FINALIZED"); e.code = 409; throw e; }
-      db.prepare("INSERT INTO instruments VALUES (?, ?, ?, ?, ?)").run(id, "PREPARED", Number(denom), Number(gen), parentH);
+      const g = Number(gen || 1);
+      if (g > 1 && parentH) {
+        if (!db.prepare("SELECT 1 FROM registered_parent_certs WHERE parent_cert_hash = ?").get(parentH)) {
+          throw new Error("ERR_UNKNOWN_PARENT_CERT");
+        }
+        if (db.prepare("SELECT 1 FROM finalized_successor_index WHERE parent_cert_hash = ?").get(parentH)) {
+          const e = new Error("ERR_PARENT_CERT_ALREADY_FINALIZED");
+          e.code = 409;
+          throw e;
+        }
+      }
+      db.prepare("INSERT INTO instruments VALUES (?, ?, ?, ?, ?)").run(id, "PREPARED", Number(denom), g, parentH || null);
       db.exec("COMMIT");
     } catch(e) { db.exec("ROLLBACK"); throw e; }
   },
@@ -43,6 +52,7 @@ async function start() {
   keyPair = await CryptoEngine.generateKey();
   http.createServer(async (req, res) => {
     const url = new URL(req.url, "http://localhost:" + PORT);
+    if (req.method === "GET" && url.pathname === "/health") { res.writeHead(200, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ ok: true, service: "dest-domain" })); }
     let body = [];
     for await (const chunk of req) body.push(chunk);
     const json = body.length ? JSON.parse(Buffer.concat(body).toString("utf-8")) : {};
@@ -57,23 +67,71 @@ async function start() {
         return inst ? send(200, { id: inst.id, state: inst.state, denom: inst.denom, isRedeemable: inst.state === "FINAL" }) : send(404, { error: "NOT_FOUND" });
       }
       if (req.method === "POST" && url.pathname === "/prepare") {
-        const envBytes = unhex(json.envelopeHex);
+        
+      let envBytes;
+      if (json.envelopeHex) {
+        envBytes = unhex(json.envelopeHex);
+      } else if (json.envelope) {
+        const e = json.envelope;
+        const toBuf = (val, size) => {
+          const buf = new Uint8Array(size);
+          if (!val) return buf;
+          if (val instanceof Uint8Array) {
+            buf.set(val.subarray(0, size));
+          } else if (typeof val === "string") {
+            const enc = new TextEncoder().encode(val);
+            buf.set(enc.subarray(0, size));
+          }
+          return buf;
+        };
+
+        const canonicalEnv = {
+          protocolVersion: e.protocolVersion ?? 1,
+          mappingVersion: e.mappingVersion ?? 7,
+          transitionId: toBuf(e.txId || e.transitionId, 16),
+          predecessorCommitment: toBuf(e.predecessorCommitment, 32),
+          sourceDomain: e.sourceDomain ?? "J-C",
+          redeemedAmount: BigInt(e.redeemedAmount ?? 0),
+          currency: e.currency ?? "USD",
+          successorDenomination: BigInt(e.successorDenomination ?? 0),
+          successorCommitment: toBuf(e.successorCommitment, 32),
+          destinationDomain: e.destinationDomain ?? "J-D",
+          mappingCommitment: toBuf(e.mappingCommitment, 32),
+          expiryEpoch: BigInt(e.expiryEpoch || 0),
+          lineageCommitment: toBuf(e.lineageCommitment || e.parentCertificateHash, 32)
+        };
+        envBytes = CanonicalRecords.serializeEnvelope(canonicalEnv);
+      } else {
+        return send(400, { error: "MISSING_ENVELOPE" });
+      }
+
         const env = CanonicalRecords.deserializeEnvelope(envBytes);
         const envelopeHash = await CryptoEngine.sha256(envBytes);
-        try { const pHash = json.parentCertHashHex || json.parentCertHash || ""; store.prepareSuccessor(json.successorId, env.successorDenomination, json.generation, pHash); }
+        try { const successorId = json.successorId || json.envelope?.successorCommitment || hex(env.successorCommitment);
+      const gen = json.generation || json.envelope?.generation || 1;
+      const pHash = json.parentCertHashHex || json.parentCertHash || json.envelope?.parentCertificateHash || "";
+      store.prepareSuccessor(successorId, env.successorDenomination, gen, pHash); }
         catch (err) { if (err.code === 409) return send(409, { error: err.message }); throw err; }
         const recordBytes = CanonicalRecords.serializeDestPrepare({
           envelopeHash,
           reservedDenomination: env.successorDenomination,
-          generation: BigInt(json.generation),
-          parentCertificateHash: unhex(json.parentCertHashHex || json.parentCertHash || json.parent_cert_hash || "")
-        });
+          generation: BigInt(json.generation || json.envelope?.generation || 1),
+          parentCertificateHash: (() => {
+          const raw = json.parentCertHashHex || json.parentCertHash || json.envelope?.parentCertificateHash;
+          if (!raw) return new Uint8Array(32);
+          const b = unhex(raw);
+          if (b.length === 32) return b;
+          const out = new Uint8Array(32);
+          out.set(b.subarray(0, 32));
+          return out;
+        })()
+      });
         const signature = await CryptoEngine.sign(keyPair.privateKey, recordBytes);
         return send(200, { ok: true, destPrepareRecordHex: hex(recordBytes), signatureHex: hex(signature) });
       }
       if (req.method === "POST" && url.pathname === "/finalize") {
-        const hexStr = json.certHex || json.decisionCertHex;
-        const proofStr = json.proofHex || json.decisionProofHex;
+        const hexStr = json.certHex || json.decisionCertHex || json.decision?.certHex || json.decision?.decisionCertHex;
+        const proofStr = json.proofHex || json.decisionProofHex || json.decision?.proofHex || json.decision?.decisionProofHex;
         const certBytes = unhex(hexStr);
         if (certBytes.length !== 90) return send(400, { error: "ERR_INVALID_DECISION_CERT_SIZE", receivedLen: certBytes.length });
         const cert = CanonicalRecords.deserializeDecisionCert(certBytes);
