@@ -1,0 +1,35 @@
+TAP version 13
+# === EXECUTING ADVERSARIAL PROTOCOL & MULTI-PROCESS CRASH SUITE ===
+# Subtest: 3-Node Distributed Protocol & Adversarial Invariant Suite
+not ok 1 - 3-Node Distributed Protocol & Adversarial Invariant Suite
+  ---
+  duration_ms: 388.244791
+  type: 'test'
+  location: '/data/data/com.termux/files/home/cn-services/tests/cluster.test.cjs:266:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    500 !== 200
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 200
+  actual: 500
+  operator: 'strictEqual'
+  stack: |-
+    runAdversarialCluster (/data/data/com.termux/files/home/cn-services/tests/cluster.test.cjs:85:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (/data/data/com.termux/files/home/cn-services/tests/cluster.test.cjs:267:3)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 664.751666

@@ -185,7 +185,13 @@ async function start() {
 
         const txId = hex(cert.transitionId);
         const finalTokenId = json.tokenId || json.instrumentId || json.id || "INST-REC-01";
-      store.finalize(finalTokenId, txId, cert.outcome);
+      const currentInst = store.get ? store.get(finalTokenId) : (db.prepare ? db.prepare("SELECT status FROM instruments WHERE id = ?").get(finalTokenId) : null);
+    const currentStatus = currentInst ? (currentInst.status || currentInst.state) : null;
+    const passedOutcome = (json.decision && json.decision.outcome) || json.outcome || (cert.outcome === 1 || cert.outcome === 'COMMIT' ? 'COMMIT' : 'ABORT');
+    if (currentStatus === 'CONSUMED' && passedOutcome !== 'COMMIT') {
+      return send(409, { error: 'ERR_STATE_CONFLICT', message: 'Delayed rollback on CONSUMED state rejected' });
+    }
+    store.finalize(finalTokenId, txId, cert.outcome);
         return send(200, { ok: true, state: cert.outcome === 'COMMIT' ? 'CONSUMED' : 'ACTIVE' });
       }
 

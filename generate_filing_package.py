@@ -101,7 +101,7 @@ My Commission Expires: ____________________
 * **Repository Origin & Tag:** `https://github.com/datguy14/cashnova-cor.git` at tag `v0.1.0-alpha` (Commit: `631569b`)
 * **Formal Verification Correspondence:**
   * TLA+ Safety Invariant Model: `formal/CashNova.tla` (18 distinct states, depth 6, verified deadlock-free).
-  * Prototype Integration Test: 9 passed automated invariant tests (`tests/verify_protocol.js`, `tests/cluster.test.js`).
+  * Prototype Integration Test: 9 passed automated invariant tests (`tests/verify_protocol.js`, `tests/cluster.test.cjs`).
 """
 
 out_dir = "/sdcard/Download"

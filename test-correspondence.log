@@ -1,0 +1,54 @@
+=== EXECUTING ADVERSARIAL PROTOCOL & MULTI-PROCESS CRASH SUITE ===
+-> Killing Source Validator mid-protocol with SIGKILL...
+-> Restarting Source Validator without deleting logs...
+✔ Mid-Protocol recovery successfully reached terminal state CONSUMED.
+▶ 3-Node Distributed Protocol & Adversarial Invariant Suite
+  ✔ TEST 1: Mid-Protocol Crash & Restart Recovery (Retained WAL) (906.136302ms)
+  ✖ TEST 2: Byte-Flipping Integrity Checks Across All 5 Records (6.110989ms)
+DEST_ERROR_STACK: TypeError: Failed to execute 'verify' on 'SubtleCrypto': 2nd argument is not of type CryptoKey.
+    at codedTypeError (node:internal/webidl:91:15)
+    at makeException (node:internal/webidl:106:10)
+    at Object.CryptoKey (node:internal/webidl:840:11)
+    at SubtleCrypto.verifyImpl (node:internal/crypto/webcrypto:1317:27)
+    at callSubtleCryptoMethod (node:internal/crypto/webcrypto:95:20)
+    at SubtleCrypto.verify (node:internal/crypto/webcrypto:1304:10)
+    at CryptoEngine.verify (file:///data/data/com.termux/files/home/cn-services/shared/records.js:31:28)
+    at Server.<anonymous> (file:///data/data/com.termux/files/home/cn-services/dest-domain/server.js:138:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  code: 'ERR_INVALID_ARG_TYPE'
+}
+✔ Duplicate, delayed, and reordered delivery successfully rejected.
+✔ Public keys strictly decoupled; signature validation executes without trusting external storage.
+
+ALL MULTI-PROCESS ADVERSARIAL INVARIANTS PASSED.
+  ✔ TEST 3: Replay Protection, Sequence Invariants & Dropped Messages (13.440937ms)
+  ✔ TEST 4: Cryptographic Key Isolation Verification (6.382031ms)
+✖ 3-Node Distributed Protocol & Adversarial Invariant Suite (1302.172551ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 3
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1542.197291
+
+✖ failing tests:
+
+test at tests/cluster.test.cjs:167:11
+✖ TEST 2: Byte-Flipping Integrity Checks Across All 5 Records (6.110989ms)
+  AssertionError [ERR_ASSERTION]: Corrupt Source Prepare Envelope Hash must be rejected
+      at TestContext.<anonymous> (/data/data/com.termux/files/home/cn-services/tests/cluster.test.cjs:183:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async runAdversarialCluster (/data/data/com.termux/files/home/cn-services/tests/cluster.test.cjs:167:3)
+      at async TestContext.<anonymous> (/data/data/com.termux/files/home/cn-services/tests/cluster.test.cjs:267:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 200,
+    expected: 200,
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }

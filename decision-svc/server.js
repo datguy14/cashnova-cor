@@ -113,7 +113,14 @@ async function start() {
 
       const txIdHex = hex(env.transitionId);
 
-        if (decisionsByTx.has(txIdHex)) {
+        if (json.sourcePrepare && json.sourcePrepare.envelopeHash) {
+    const sentHashHex = json.sourcePrepare.envelopeHash.toLowerCase();
+    if (typeof expectedEnvHashHex !== 'undefined' && sentHashHex !== expectedEnvHashHex.toLowerCase()) {
+      return send(400, { error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH", message: "Corrupted source prepare envelope hash rejected" });
+    }
+  }
+
+  if (decisionsByTx.has(txIdHex)) {
           const rec = await decisionsByTx.get(txIdHex);
           return send(200, {
           ok: true,
