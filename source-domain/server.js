@@ -150,6 +150,11 @@ async function start() {
         state: "LOCKED",
       envelopeHash: typeof envHash !== "undefined" ? hex(envHash) : (typeof record !== "undefined" && record.envelopeHash ? hex(record.envelopeHash) : hex(recordBytes.subarray(0, 32))),
         sourcePrepareRecordHex: hex(recordBytes),
+      sourcePrepareHex: hex(recordBytes),
+      sourceSigHex: hex(signature),
+      signatureHex: hex(signature),
+      sourcePrepareHex: hex(recordBytes),
+      sourceSigHex: hex(signature),
         signatureHex: hex(signature)
       });
     }

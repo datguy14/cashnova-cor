@@ -44,7 +44,8 @@ async function start() {
       const envObj = json.envelope;
       const expectedMapping = "a1b2c3d4e5f60718293a4b5c6d7e8f901234567890abcdef1234567890abcdef";
       if (envObj && envObj.mappingCommitment && envObj.mappingCommitment !== expectedMapping) {
-        return send(400, { error: "ERR_MANIFEST_COMMITMENT_MISMATCH" });
+        console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: "ERR_MANIFEST_COMMITMENT_MISMATCH" }));
+  return send(400, { error: "ERR_MANIFEST_COMMITMENT_MISMATCH" });
       }
         
       let envBytes;
@@ -81,7 +82,8 @@ async function start() {
         };
         envBytes = CanonicalRecords.serializeEnvelope(canonicalEnv);
       } else {
-        return send(400, { error: "MISSING_ENVELOPE" });
+        console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: "MISSING_ENVELOPE" }));
+  return send(400, { error: "MISSING_ENVELOPE" });
       }
 
         const envelopeHash = await CryptoEngine.sha256(envBytes);
@@ -99,13 +101,15 @@ async function start() {
           
           if (prepRecord && prepRecord.envelopeHash) {
             if (json.sourcePrepare.envelopeHash.toLowerCase() !== hex(prepRecord.envelopeHash).toLowerCase()) {
-              return send(400, { error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" });
+              console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" }));
+  return send(400, { error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" });
             }
           } else {
             const rawRecHex = json.sourcePrepare.sourcePrepareHex.toLowerCase();
             const sentHashHex = json.sourcePrepare.envelopeHash.toLowerCase();
             if (!rawRecHex.includes(sentHashHex)) {
-              return send(400, { error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" });
+              console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" }));
+  return send(400, { error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" });
             }
           }
         }
@@ -116,7 +120,8 @@ async function start() {
         if (json.sourcePrepare && json.sourcePrepare.envelopeHash) {
     const sentHashHex = json.sourcePrepare.envelopeHash.toLowerCase();
     if (typeof expectedEnvHashHex !== 'undefined' && sentHashHex !== expectedEnvHashHex.toLowerCase()) {
-      return send(400, { error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH", message: "Corrupted source prepare envelope hash rejected" });
+      console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH", message: "Corrupted source prepare envelope hash rejected" }));
+  return send(400, { error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH", message: "Corrupted source prepare envelope hash rejected" });
     }
   }
 
@@ -139,34 +144,41 @@ async function start() {
           const validManifestSig = await CryptoEngine.verify(governancePubKey, unhex(json.manifestSigHex), manifestBytes);
           if (!validManifestSig) return send(401, { error: 'ERR_UNAUTHENTICATED_GOVERNANCE_MANIFEST' });
 
-          if (manifest.version !== env.mappingVersion) return send(400, { error: 'ERR_MANIFEST_VERSION_MISMATCH' });
+          if (manifest.version !== env.mappingVersion) console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_MANIFEST_VERSION_MISMATCH' }));
+  return send(400, { error: 'ERR_MANIFEST_VERSION_MISMATCH' });
           if (!bytesEqual(manifest.mappingCommitment, env.mappingCommitment)) {
-            return send(400, { error: 'ERR_MANIFEST_COMMITMENT_MISMATCH' });
+            console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_MANIFEST_COMMITMENT_MISMATCH' }));
+  return send(400, { error: 'ERR_MANIFEST_COMMITMENT_MISMATCH' });
           }
 
           const expectedDomain = resolveBand(env.successorDenomination);
           if (env.destinationDomain !== expectedDomain) {
-            return send(400, { error: `ERR_ROUTING_MISMATCH: ${env.successorDenomination} resolves to ${expectedDomain}` });
+            console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: `ERR_ROUTING_MISMATCH: ${env.successorDenomination} resolves to ${expectedDomain}` }));
+  return send(400, { error: `ERR_ROUTING_MISMATCH: ${env.successorDenomination} resolves to ${expectedDomain}` });
           }
 
           const srcPrepBytes = unhex(json.sourcePrepareRecordHex || json.sourcePrepareHex || json.prepRecordHex);
           const srcPrep = CanonicalRecords.deserializeSourcePrepare(srcPrepBytes);
-          if (!bytesEqual(srcPrep.envelopeHash, envHash)) return send(400, { error: 'ERR_SRC_ENVELOPE_HASH_MISMATCH' });
+          if (!bytesEqual(srcPrep.envelopeHash, envHash)) console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_SRC_ENVELOPE_HASH_MISMATCH' }));
+  return send(400, { error: 'ERR_SRC_ENVELOPE_HASH_MISMATCH' });
     const outerSrcHash = (json.sourcePrepare && (json.sourcePrepare.envelopeHash || json.sourcePrepare.envelopeHashHex));
     if (outerSrcHash && outerSrcHash.toLowerCase() !== hex(srcPrep.envelopeHash).toLowerCase()) {
-      return send(400, { error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" });
+      console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" }));
+  return send(400, { error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" });
     }
           const validSrc = await CryptoEngine.verify(sourcePubKey, unhex(json.sourceSigHex), srcPrepBytes);
           if (!validSrc) return send(401, { error: 'ERR_INVALID_SRC_PREPARE_SIG' });
 
           const dstPrepBytes = unhex(json.destPrepareRecordHex || json.destPrepareHex);
           const dstPrep = CanonicalRecords.deserializeDestPrepare(dstPrepBytes);
-          if (!bytesEqual(dstPrep.envelopeHash, envHash)) return send(400, { error: 'ERR_DST_ENVELOPE_HASH_MISMATCH' });
+          if (!bytesEqual(dstPrep.envelopeHash, envHash)) console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_DST_ENVELOPE_HASH_MISMATCH' }));
+  return send(400, { error: 'ERR_DST_ENVELOPE_HASH_MISMATCH' });
           const validDst = await CryptoEngine.verify(destPubKey, unhex(json.destSigHex), dstPrepBytes);
           if (!validDst) return send(401, { error: 'ERR_INVALID_DST_PREPARE_SIG' });
 
-          if (srcPrep.predecessorDenomination !== env.redeemedAmount + dstPrep.reservedDenomination) {
-            return send(400, { error: 'ERR_CONSERVATION_VIOLATION' });
+          if (Number(srcPrep.predecessorDenomination) !== Number(env.redeemedAmount) + Number(dstPrep.reservedDenomination)) {
+            console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_CONSERVATION_VIOLATION' }));
+  return send(400, { error: 'ERR_CONSERVATION_VIOLATION' });
           }
         }
 

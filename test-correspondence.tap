@@ -3,7 +3,7 @@ TAP version 13
 # Subtest: 3-Node Distributed Protocol & Adversarial Invariant Suite
 not ok 1 - 3-Node Distributed Protocol & Adversarial Invariant Suite
   ---
-  duration_ms: 388.244791
+  duration_ms: 385.467761
   type: 'test'
   location: '/data/data/com.termux/files/home/cn-services/tests/cluster.test.cjs:266:1'
   failureType: 'testCodeFailure'
@@ -32,4 +32,4 @@ not ok 1 - 3-Node Distributed Protocol & Adversarial Invariant Suite
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 664.751666
+# duration_ms 589.785677
