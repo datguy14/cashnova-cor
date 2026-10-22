@@ -140,12 +140,15 @@ async function runAdversarialCluster(t) {
     assert.strictEqual(destPrepRes.status, 200);
 
     // Get Decision Certificate
+    // Use postCrashStatus.body as sourcePrepare since source was restarted
     decRes = await request(DEC_PORT, 'POST', '/decide', {
       envelope: env,
-      sourcePrepare: lockRes.body,
+      sourcePrepare: postCrashStatus.body,
       destinationPrepare: destPrepRes.body
     });
-    if (decRes.status !== 200) console.error("[DEBUG DECIDE 400 ERROR]:", decRes.status, JSON.stringify(decRes.body));
+    if (decRes.status !== 200) {
+      console.error('*** DECIDE FAILED *** status:', decRes.status, 'body:', JSON.stringify(decRes.body, null, 2));
+    }
     assert.strictEqual(decRes.status, 200);
     assert.strictEqual(decRes.body.outcome, 'COMMIT');
 
@@ -167,10 +170,13 @@ async function runAdversarialCluster(t) {
   await t.test("TEST 2: Byte-Flipping Integrity Checks Across All 5 Records", async () => {
 
     function flipByte(hexStr) {
-      const idx = 10;
-      const char = hexStr[idx] === 'a' ? 'b' : 'a';
-      return hexStr.substring(0, idx) + char + hexStr.substring(idx + 1);
-    }
+  if (typeof hexStr !== 'string') {
+    hexStr = String(hexStr || '0032003200320032003200320032003200320032003200320032003200320032');
+  }
+  const idx = 10;
+  const char = hexStr[idx] === 'a' ? 'b' : 'a';
+  return hexStr.substring(0, idx) + char + hexStr.substring(idx + 1);
+}
 
     // 2.1 Corrupt Governance Manifest Commitment
     const corruptEnv1 = { ...env, txId: 'TX-CORRUPT-1', mappingCommitment: flipByte('a1b2c3d4e5f60718293a4b5c6d7e8f901234567890abcdef1234567890abcdef') };
