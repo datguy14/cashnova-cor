@@ -79,7 +79,7 @@ async function start() {
         return send(200, { ok: true });
       }
       if (req.method === 'POST' && url.pathname === '/mint') {
-        store.mint(json.id, json.denom ?? json.denomCents, json.currency ?? 'USD', json.generation ?? 1);
+        try { store.mint(json.id, json.denom ?? json.denomCents ?? '10000', json.currency ?? json.denomCurrency ?? 'USD', json.generation ?? 1); throw e; }
         return send(200, { ok: true });
       }
       if (req.method === 'GET' && (url.pathname.startsWith('/instrument/') || url.pathname.startsWith('/state/'))) {
