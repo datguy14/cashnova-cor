@@ -181,14 +181,16 @@ async function runAdversarialCluster(t) {
 }
 
     // 2.1 Corrupt Governance Manifest Commitment
-    const corruptEnv1 = { ...env, txId: 'TX-CORRUPT-1', mappingCommitment: flipByte('a1b2c3d4e5f60718293a4b5c6d7e8f901234567890abcdef1234567890abcdef') };
+    const env1 = { ...env, txId: 'TX-CORRUPT-1' };
+    const corruptEnv1 = { ...env1, mappingCommitment: flipByte('a1b2c3d4e5f60718293a4b5c6d7e8f901234567890abcdef1234567890abcdef') };
     const r1 = await request(DEC_PORT, 'POST', '/decide', { envelope: corruptEnv1, sourcePrepare: lockRes.body, destinationPrepare: destPrepRes.body });
     assert.strictEqual(r1.status, 400);
     assert.strictEqual(r1.body.error, "ERR_MANIFEST_COMMITMENT_MISMATCH");
 
     // 2.2 Corrupt Transition Envelope Hash
+    const env2 = { ...env, txId: 'TX-CORRUPT-2' };
     const badSrcPrep = { ...lockRes.body, envelopeHash: flipByte(lockRes.body.envelopeHash) };
-    const r2 = await request(DEC_PORT, 'POST', '/decide', { envelope: env, sourcePrepare: badSrcPrep, destinationPrepare: destPrepRes.body });
+    const r2 = await request(DEC_PORT, 'POST', '/decide', { envelope: env2, sourcePrepare: badSrcPrep, destinationPrepare: destPrepRes.body });
     assert.strictEqual(r2.status, 400);
     assert.strictEqual(r2.body.error, "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH");
 
@@ -206,14 +208,15 @@ async function runAdversarialCluster(t) {
     assert.strictEqual(r3.body.error, "ERR_INVALID_SOURCE_PREPARE_SIG");
 
     // 2.4 Corrupt Destination Prepare Signature
+    const env4 = { ...env, txId: 'TX-CORRUPT-4' };
     const badDestSig = { ...destPrepRes.body, destinationPrepareHex: flipByte(destPrepRes.body.destinationPrepareHex) };
-    const r4 = await request(DEC_PORT, 'POST', '/decide', { envelope: env, sourcePrepare: lockRes.body, destinationPrepare: badDestSig });
+    const r4 = await request(DEC_PORT, 'POST', '/decide', { envelope: env4, sourcePrepare: lockRes.body, destinationPrepare: badDestSig });
     assert.strictEqual(r4.status, 401);
     assert.strictEqual(r4.body.error, "ERR_INVALID_DST_PREPARE_SIG");
 
     // 2.5 Corrupt Decision Certificate Hash
     const badDecMsg = { ...decRes.body, certificateHash: flipByte(decRes.body.certificateHash) };
-    const r5 = await request(DEST_PORT, 'POST', '/finalize', { txId, decision: badDecMsg });
+    const r5 = await request(DEST_PORT, 'POST', '/finalize', { txId: 'TX-CORRUPT-5', decision: badDecMsg });
     assert.strictEqual(r5.status, 400);
     assert.strictEqual(r5.body.error, "ERR_CORRUPT_DECISION_CERT_HASH");
     console.log("✔ Byte-flipping successfully rejected across all 5 record types.");
