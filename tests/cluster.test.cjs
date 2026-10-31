@@ -197,6 +197,7 @@ async function runAdversarialCluster(t) {
     const r3 = await request(DEC_PORT, 'POST', '/decide', { envelope: env, sourcePrepare: badSrcSig, destinationPrepare: destPrepRes.body });
     assert.strictEqual(r3.status, 401);
     assert.strictEqual(r3.body.error, "ERR_INVALID_SOURCE_PREPARE_SIG");
+    assert.strictEqual(r3.body.error, "ERR_INVALID_SOURCE_PREPARE_SIG");
 
     // 2.4 Corrupt Destination Prepare Signature
     const badDestSig = { ...destPrepRes.body, destinationPrepareHex: flipByte(destPrepRes.body.destinationPrepareHex) };
