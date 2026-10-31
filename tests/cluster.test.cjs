@@ -82,7 +82,7 @@ async function runAdversarialCluster(t) {
       denom: '10000',
       currency: 'USD'
     });
-    assert.strictEqual(mintRes.status, 200);
+    assert.strictEqual(mintRes.status, 201);
 
     // 2. MID-PROTOCOL SIGKILL AND CRASH RECOVERY
     
