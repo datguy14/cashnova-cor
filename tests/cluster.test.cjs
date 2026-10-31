@@ -55,7 +55,7 @@ function spawnService(scriptPath, port, envVars = {}) {
   return proc;
 }
 
-async function waitHealthy(port, retries = 20) {
+async function waitHealthy(port, retries = 50) {
   for (let i = 0; i < retries; i++) {
     try {
       const res = await request(port, 'GET', '/health');
