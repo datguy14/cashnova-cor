@@ -75,6 +75,8 @@ async function runAdversarialCluster(t) {
 
   try {
     await Promise.all([waitHealthy(SRC_PORT), waitHealthy(DEST_PORT), waitHealthy(DEC_PORT)]);
+        const decKeyRes = await request(DEC_PORT, "GET", "/public-key");
+        await request(DEST_PORT, "POST", "/configure", { decisionJwk: decKeyRes.body.jwk });
 
     // 1. SETUP INSTRUMENT
     const mintRes = await request(SRC_PORT, 'POST', '/mint', {
