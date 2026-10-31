@@ -144,8 +144,7 @@ async function start() {
           const validManifestSig = await CryptoEngine.verify(governancePubKey, unhex(json.manifestSigHex), manifestBytes);
           if (!validManifestSig) return send(401, { error: 'ERR_UNAUTHENTICATED_GOVERNANCE_MANIFEST' });
 
-          if (manifest.version !== env.mappingVersion) console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_MANIFEST_VERSION_MISMATCH' }));
-  return send(400, { error: 'ERR_MANIFEST_VERSION_MISMATCH' });
+          if (manifest.version !== env.mappingVersion) { console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_MANIFEST_VERSION_MISMATCH' })); return send(400, { error: 'ERR_MANIFEST_VERSION_MISMATCH' }); }
           if (!bytesEqual(manifest.mappingCommitment, env.mappingCommitment)) {
             console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_MANIFEST_COMMITMENT_MISMATCH' }));
   return send(400, { error: 'ERR_MANIFEST_COMMITMENT_MISMATCH' });
@@ -159,8 +158,10 @@ async function start() {
 
           const srcPrepBytes = unhex(json.sourcePrepareRecordHex || json.sourcePrepareHex || json.prepRecordHex);
           const srcPrep = CanonicalRecords.deserializeSourcePrepare(srcPrepBytes);
-          if (!bytesEqual(srcPrep.envelopeHash, envHash)) console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_SRC_ENVELOPE_HASH_MISMATCH' }));
+          if (!bytesEqual(srcPrep.envelopeHash, envHash)) {
+      console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_SRC_ENVELOPE_HASH_MISMATCH' }));
   return send(400, { error: 'ERR_SRC_ENVELOPE_HASH_MISMATCH' });
+    }
     const outerSrcHash = (json.sourcePrepare && (json.sourcePrepare.envelopeHash || json.sourcePrepare.envelopeHashHex));
     if (outerSrcHash && outerSrcHash.toLowerCase() !== hex(srcPrep.envelopeHash).toLowerCase()) {
       console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH" }));
@@ -171,8 +172,10 @@ async function start() {
 
           const dstPrepBytes = unhex(json.destPrepareRecordHex || json.destPrepareHex);
           const dstPrep = CanonicalRecords.deserializeDestPrepare(dstPrepBytes);
-          if (!bytesEqual(dstPrep.envelopeHash, envHash)) console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_DST_ENVELOPE_HASH_MISMATCH' }));
+          if (!bytesEqual(dstPrep.envelopeHash, envHash)) {
+      console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_DST_ENVELOPE_HASH_MISMATCH' }));
   return send(400, { error: 'ERR_DST_ENVELOPE_HASH_MISMATCH' });
+    }
           const validDst = await CryptoEngine.verify(destPubKey, unhex(json.destSigHex), dstPrepBytes);
           if (!validDst) return send(401, { error: 'ERR_INVALID_DST_PREPARE_SIG' });
 

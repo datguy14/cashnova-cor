@@ -18,14 +18,14 @@ db.exec(`
     id TEXT PRIMARY KEY,
     state TEXT NOT NULL,
     denom INTEGER NOT NULL,
-    generation INTEGER NOT NULL,
+    generation INTEGER NOT NULL DEFAULT 1,
     locked_tx_id TEXT
   );
 `);
 
 const store = {
   mint(id, denom, generation) {
-    db.prepare('INSERT INTO instruments (id, state, denom, generation) VALUES (?, ?, ?, ?)').run(id, 'ACTIVE', Number(denom), Number(generation));
+    db.prepare('INSERT INTO instruments (id, state, denom, generation) VALUES (?, ?, ?, ?)').run(id, 'ACTIVE', Number(denom), (Number(generation) || 1));
   },
   get(id) {
     return db.prepare('SELECT * FROM instruments WHERE id = ?').get(id);
@@ -79,8 +79,8 @@ async function start() {
         return send(200, { ok: true });
       }
       if (req.method === 'POST' && url.pathname === '/mint') {
-        try { store.mint(json.id, json.denom ?? json.denomCents ?? '10000', json.currency ?? json.denomCurrency ?? 'USD', json.generation ?? 1); throw e; }
-        return send(200, { ok: true });
+        store.mint(json.id, json.denom ?? json.denomCents ?? '10000', json.currency ?? json.denomCurrency ?? 'USD', json.generation ?? 1);
+        return send(201, { ok: true });
       }
       if (req.method === 'GET' && (url.pathname.startsWith('/instrument/') || url.pathname.startsWith('/state/'))) {
         const id = url.pathname.split('/')[2];
