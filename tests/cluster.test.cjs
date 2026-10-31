@@ -192,9 +192,14 @@ async function runAdversarialCluster(t) {
     assert.strictEqual(r2.status, 400);
     assert.strictEqual(r2.body.error, "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH");
 
-    // 2.3 Corrupt Source Prepare Signature
-    const badSrcSig = { ...lockRes.body, sourcePrepareHex: flipByte(lockRes.body.sourcePrepareHex) };
-    const r3 = await request(DEC_PORT, 'POST', '/decide', { envelope: env, sourcePrepare: badSrcSig, destinationPrepare: destPrepRes.body });
+        // 2.3 Corrupt Source Prepare Signature (corrupting signature while leaving payload hash intact)
+    const corruptedSig = flipByte(lockRes.body.sourceSigHex ?? lockRes.body.sourcePrepareHex ?? "0032003200320032003200320032003200320032003200320032003200320032");
+    const r3 = await request(DEC_PORT, "POST", "/decide", { 
+        envelope: env, 
+        sourcePrepare: lockRes.body, 
+        sourceSigHex: corruptedSig, 
+        destinationPrepare: destPrepRes.body 
+    });
     assert.strictEqual(r3.status, 401);
     assert.strictEqual(r3.body.error, "ERR_INVALID_SOURCE_PREPARE_SIG");
     assert.strictEqual(r3.body.error, "ERR_INVALID_SOURCE_PREPARE_SIG");
