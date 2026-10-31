@@ -183,27 +183,32 @@ async function runAdversarialCluster(t) {
     // 2.1 Corrupt Governance Manifest Commitment
     const corruptEnv1 = { ...env, txId: 'TX-CORRUPT-1', mappingCommitment: flipByte('a1b2c3d4e5f60718293a4b5c6d7e8f901234567890abcdef1234567890abcdef') };
     const r1 = await request(DEC_PORT, 'POST', '/decide', { envelope: corruptEnv1, sourcePrepare: lockRes.body, destinationPrepare: destPrepRes.body });
-    assert.notStrictEqual(r1.status, 200, "Corrupt mapping commitment must be rejected");
+    assert.strictEqual(r1.status, 400);
+    assert.strictEqual(r1.body.error, "ERR_MANIFEST_COMMITMENT_MISMATCH");
 
     // 2.2 Corrupt Transition Envelope Hash
     const badSrcPrep = { ...lockRes.body, envelopeHash: flipByte(lockRes.body.envelopeHash) };
     const r2 = await request(DEC_PORT, 'POST', '/decide', { envelope: env, sourcePrepare: badSrcPrep, destinationPrepare: destPrepRes.body });
-    assert.notStrictEqual(r2.status, 200, "Corrupt Source Prepare Envelope Hash must be rejected");
+    assert.strictEqual(r2.status, 400);
+    assert.strictEqual(r2.body.error, "ERR_CORRUPT_SOURCE_PREPARE_ENVELOPE_HASH");
 
     // 2.3 Corrupt Source Prepare Signature
     const badSrcSig = { ...lockRes.body, sourcePrepareHex: flipByte(lockRes.body.sourcePrepareHex) };
     const r3 = await request(DEC_PORT, 'POST', '/decide', { envelope: env, sourcePrepare: badSrcSig, destinationPrepare: destPrepRes.body });
-    assert.notStrictEqual(r3.status, 200, "Corrupt Source Prepare Signature must be rejected");
+    assert.strictEqual(r3.status, 401);
+    assert.strictEqual(r3.body.error, "ERR_INVALID_SOURCE_PREPARE_SIG");
 
     // 2.4 Corrupt Destination Prepare Signature
     const badDestSig = { ...destPrepRes.body, destinationPrepareHex: flipByte(destPrepRes.body.destinationPrepareHex) };
     const r4 = await request(DEC_PORT, 'POST', '/decide', { envelope: env, sourcePrepare: lockRes.body, destinationPrepare: badDestSig });
-    assert.notStrictEqual(r4.status, 200, "Corrupt Destination Prepare Signature must be rejected");
+    assert.strictEqual(r4.status, 401);
+    assert.strictEqual(r4.body.error, "ERR_INVALID_DST_PREPARE_SIG");
 
     // 2.5 Corrupt Decision Certificate Hash
     const badDecMsg = { ...decRes.body, certificateHash: flipByte(decRes.body.certificateHash) };
     const r5 = await request(DEST_PORT, 'POST', '/finalize', { txId, decision: badDecMsg });
-    assert.notStrictEqual(r5.status, 200, "Corrupt Decision Certificate Hash must be rejected by validator");
+    assert.strictEqual(r5.status, 400);
+    assert.strictEqual(r5.body.error, "ERR_CORRUPT_DECISION_CERT_HASH");
     console.log("✔ Byte-flipping successfully rejected across all 5 record types.");
 
     // 3. DUPLICATE, REORDERED, AND DROPPED MESSAGES
