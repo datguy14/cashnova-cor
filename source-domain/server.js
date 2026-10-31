@@ -124,7 +124,7 @@ async function start() {
           destinationDomain: e.destinationDomain ?? "J-D",
           mappingCommitment: toBuf(e.mappingCommitment, 32),
           expiryEpoch: BigInt(e.expiryEpoch || 0),
-          lineageCommitment: toBuf(e.lineageCommitment || e.parentCertificateHash, 32)
+          lineageCommitment: toBuf(e.lineageCommitment || e.parentCertificateHash || "0".repeat(64), 32)
         };
 
         envBytes = CanonicalRecords.serializeEnvelope(canonicalEnv);
