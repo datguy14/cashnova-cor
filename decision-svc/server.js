@@ -156,7 +156,8 @@ async function start() {
   return send(400, { error: `ERR_ROUTING_MISMATCH: ${env.successorDenomination} resolves to ${expectedDomain}` });
           }
 
-          const srcPrepBytes = unhex(json.sourcePrepareRecordHex || json.sourcePrepareHex || json.prepRecordHex);
+          const srcPrepHex = json.sourcePrepareRecordHex || json.sourcePrepareHex || json.prepRecordHex || (typeof json.sourcePrepare === "string" ? json.sourcePrepare : null) || json.sourcePrepare?.sourcePrepareRecordHex || json.sourcePrepare?.sourcePrepareHex;
+          const srcPrepBytes = unhex(srcPrepHex);
           const srcPrep = CanonicalRecords.deserializeSourcePrepare(srcPrepBytes);
           if (!bytesEqual(srcPrep.envelopeHash, envHash)) {
       console.error('[DECISION-SVC 400 ERROR]:', JSON.stringify({ error: 'ERR_SRC_ENVELOPE_HASH_MISMATCH' }));
