@@ -149,14 +149,9 @@ async function start() {
         ok: true,
         state: "LOCKED",
           envelopeHash: typeof envHash !== "undefined" ? hex(envHash) : hex(recordBytes.subarray(0, 32)),
-        sourcePrepareRecordHex: hex(recordBytes),
-      sourcePrepareHex: hex(recordBytes),
-      sourceSigHex: hex(signature),
-      signatureHex: hex(signature),
-      sourcePrepareHex: hex(recordBytes),
-      sourceSigHex: hex(signature),
-        signatureHex: hex(signature)
-      });
+        sourcePrepareHex: hex(recordBytes),
+          signatureHex: hex(signature)
+        });
     }
       if (req.method === 'POST' && url.pathname === '/finalize') {
         const hexStr = json.certHex || json.decisionCertHex || json.decision?.certHex || json.decision?.decisionCertHex;
