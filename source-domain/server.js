@@ -148,7 +148,7 @@ async function start() {
       return send(200, {
         ok: true,
         state: "LOCKED",
-          envelopeHash: hex(envelopeHash),
+          envelopeHash: typeof envHash !== "undefined" ? hex(envHash) : hex(recordBytes.subarray(0, 32)),
         sourcePrepareRecordHex: hex(recordBytes),
       sourcePrepareHex: hex(recordBytes),
       sourceSigHex: hex(signature),
